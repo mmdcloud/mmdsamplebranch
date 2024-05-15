@@ -5,7 +5,7 @@ const http = require("http")
 // Creating server  
 const server = http.createServer((req, res) => { 
     // Sending the response 
-    res.write("Welcome to nodejs !") 
+    res.write("Welcome to aws !") 
     res.end(); 
 }) 
   
