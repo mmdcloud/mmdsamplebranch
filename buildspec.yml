@@ -1,0 +1,32 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - AWS_DEFAULT_REGION=us-east-1
+      - echo $AWS_DEFAULT_REGION
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 610927462851.dkr.ecr.us-east-1.amazonaws.com
+      - REPOSITORY_URI=610927462851.dkr.ecr.us-east-1.amazonaws.com/nodeapp
+  build:
+    commands:
+      - echo Build started on `date`
+      - docker images
+      - docker build -t nodeapp .
+      - echo $REPOSITORY_URI
+      - echo $REPOSITORY_URI:latest
+      - docker tag nodeapp:latest $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:latest
+      - echo Writing image definition file...
+      - echo Done
+      - printf '[{"name":"nodeapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
